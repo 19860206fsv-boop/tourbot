@@ -1,6 +1,25 @@
 import feedparser
 from config import RSS_SOURCES, KEYWORDS, MAX_NEWS_PER_CHECK
 
+# 🚫 СТОП-СЛОВА — если есть в тексте, новость ВЫБРАСЫВАЕМ (даже если она "туристическая")
+STOP_WORDS = [
+    "всу", "сбу", "гур", "украин", "укро", "одесс", "киев", "киів",
+    "харьков", "херсон", "запорож", "донецк", "луганск", "мариуполь",
+    "мобилизац", "фронт", "обстрел", "военн", "боевик", "карател",
+    "теракт", "подорв", "убит", "погиб", "ракет", "дрон", "бпла",
+    "снаряд", "минобороны", "спецоперац", " сво ", "зеленск",
+    "всушник", "нацбат", "азов", "контрнаступ", "ракетн", "удар по"
+]
+
+
+def has_stop_word(text):
+    """Проверяем, есть ли в тексте стоп-слова (не туризм)."""
+    text_lower = text.lower()
+    for stop in STOP_WORDS:
+        if stop in text_lower:
+            return True
+    return False
+
 
 def is_tourism_related(text):
     """Проверяем, есть ли в тексте туристические ключевые слова."""
@@ -27,8 +46,13 @@ def fetch_news():
                 if not link:
                     continue
 
-                # Проверяем на туристическую тему
                 combined_text = title + " " + summary
+
+                # 🚫 1. Сначала выбрасываем новости со стоп-словами
+                if has_stop_word(combined_text):
+                    continue
+
+                # ✅ 2. Потом оставляем только туристические
                 if is_tourism_related(combined_text):
                     news_list.append({
                         "title": title,
